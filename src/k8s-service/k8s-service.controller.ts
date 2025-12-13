@@ -5,6 +5,7 @@ import {
   BadRequestException,
   Delete,
   Get,
+  Query,
 } from '@nestjs/common';
 import { KubernetesService } from './k8s-service.service';
 
@@ -15,7 +16,7 @@ export class KubernetesController {
   @Post('initialize')
   async initializeK8s(
     @Body()
-    { name, image, port, usePrivateRegistry }: { name: string; image: string; port: number; usePrivateRegistry: boolean },
+    { name, image, port, usePrivateRegistry, kubeConfig }: { name: string; image: string; port: number; usePrivateRegistry: boolean; kubeConfig: string },
   ): Promise<any> {
     if (name === undefined || image === undefined || port === undefined || usePrivateRegistry === undefined)
       throw new BadRequestException('Invalid Request, Parameters missing');
@@ -24,20 +25,22 @@ export class KubernetesController {
       name: name,
       image: image,
       usePrivateRegistry,
+      kubeConfig,
     });
-    console.log(deployment);
+    
     if (!deployment.success) throw new BadRequestException(deployment.message);
 
     const service = await this.kubernetesService.createService({
       name: name,
       port: port,
+      kubeConfig,
     });
-    console.log(service);
     if (!service.success) throw new BadRequestException(service.message);
 
     const ingress = await this.kubernetesService.createIngress({
       name: name,
       host: name,
+      kubeConfig,
     });
     console.log(ingress);
     if (!ingress.success) throw new BadRequestException(ingress.message);
@@ -50,13 +53,14 @@ export class KubernetesController {
 
   @Post('create-deployment')
   async createDeployment(
-    @Body() { name, image, usePrivateRegistry }: { name: string; image: string; usePrivateRegistry: boolean },
+    @Body() { name, image, usePrivateRegistry, kubeConfig }: { name: string; image: string; usePrivateRegistry: boolean; kubeConfig: string },
   ) {
     try {
       const result = await this.kubernetesService.createDeployment({
         name: name,
         image: image,
         usePrivateRegistry,
+        kubeConfig: kubeConfig,
       });
       return {
         success: true,
@@ -71,11 +75,12 @@ export class KubernetesController {
   }
 
   @Post('create-service')
-  async createService(@Body() { name, port }: { name: string; port: number }) {
+  async createService(@Body() { name, port, kubeConfig }: { name: string; port: number; kubeConfig: string }) {
     try {
       const result = await this.kubernetesService.createService({
         name: name,
         port: port,
+        kubeConfig: kubeConfig,
       });
       return {
         success: true,
@@ -90,11 +95,12 @@ export class KubernetesController {
   }
 
   @Post('create-ingress')
-  async createIngress(@Body() { name, host }: { name: string; host: string }) {
+  async createIngress(@Body() { name, host, kubeConfig }: { name: string; host: string; kubeConfig: string }) {
     try {
       const result = await this.kubernetesService.createIngress({
         name: name,
         host: host,
+        kubeConfig: kubeConfig,
       });
       return {
         success: true,
@@ -109,10 +115,11 @@ export class KubernetesController {
   }
 
   @Delete('down')
-  async downK8s(@Body() { name }: { name: string }): Promise<any> {
+  async downK8s(@Body() { name, kubeConfig }: { name: string; kubeConfig: string }): Promise<any> {
     try {
       const result = await this.kubernetesService.deleteK8sResources({
         name: name,
+        kubeConfig: kubeConfig,
       });
       return {
         success: true,
@@ -127,9 +134,9 @@ export class KubernetesController {
   }
 
   @Get('deployments')
-  async getDeployments(): Promise<any> {
+  async getDeployments(@Query() query: { kubeConfig: string }): Promise<any> {
     try {
-      const result = await this.kubernetesService.getDeployments();
+      const result = await this.kubernetesService.getDeployments(query.kubeConfig);
       return {
         success: true,
         message: result,
@@ -143,9 +150,9 @@ export class KubernetesController {
   }
 
   @Get('services')
-  async getServices(): Promise<any> {
+  async getServices(@Query() query: { kubeConfig: string }): Promise<any> {
     try {
-      const result = await this.kubernetesService.getServices();
+      const result = await this.kubernetesService.getServices(query.kubeConfig);
       return {
         success: true,
         message: result,
@@ -159,9 +166,9 @@ export class KubernetesController {
   }
 
   @Get('ingresses')
-  async getIngresses(): Promise<any> {
+  async getIngresses(@Query() query: { kubeConfig: string }): Promise<any> {
     try {
-      const result = await this.kubernetesService.getIngresses();
+      const result = await this.kubernetesService.getIngresses(query.kubeConfig);
       return {
         success: true,
         message: result,
@@ -175,9 +182,9 @@ export class KubernetesController {
   }
 
   @Get('pods')
-  async getPods(): Promise<any> {
+  async getPods(@Query() query: { kubeConfig: string }): Promise<any> {
     try {
-      const result = await this.kubernetesService.getPods();
+      const result = await this.kubernetesService.getPods(query.kubeConfig);
       return {
         success: true,
         message: result,

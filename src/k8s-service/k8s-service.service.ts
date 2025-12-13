@@ -7,33 +7,33 @@ export class KubernetesService {
   private k8sCoreV1Api: any;
   private k8sNetworkingApi: any;
 
-  async initializeK8sClient(): Promise<void> {
+  async initializeK8sClient(kubeConfigString: string): Promise<void> {
     const k8s = await import('@kubernetes/client-node');
     const kc = new k8s.KubeConfig();
-    kc.loadFromDefault();
+    // kc.loadFromDefault();
 
     // const configString = process.env.KUBECONFIG_CONTENT;
-    // kc.loadFromString(configString);
+    kc.loadFromString(kubeConfigString);
     this.k8sApi = kc.makeApiClient(k8s.AppsV1Api);
   }
 
-  async initializeK8sCoreV1Client(): Promise<void> {
+  async initializeK8sCoreV1Client(kubeConfigString: string): Promise<void> {
     const k8s = await import('@kubernetes/client-node');
     const kc = new k8s.KubeConfig();
-    kc.loadFromDefault();
+    // kc.loadFromDefault();
 
     // const configString = process.env.KUBECONFIG_CONTENT;
-    // kc.loadFromString(configString);
+    kc.loadFromString(kubeConfigString);
     this.k8sCoreV1Api = kc.makeApiClient(k8s.CoreV1Api);
   }
 
-  async initializeK8sNetworkingClient(): Promise<void> {
+  async initializeK8sNetworkingClient(kubeConfigString: string): Promise<void> {
     const k8s = await import('@kubernetes/client-node');
     const kc = new k8s.KubeConfig();
-    kc.loadFromDefault();
+    // kc.loadFromDefault();
 
     // const configString = process.env.KUBECONFIG_CONTENT;
-    // kc.loadFromString(configString);
+    kc.loadFromString(kubeConfigString);
     this.k8sNetworkingApi = kc.makeApiClient(k8s.NetworkingV1Api);
   }
 
@@ -44,13 +44,15 @@ export class KubernetesService {
     name,
     image,
     usePrivateRegistry,
+    kubeConfig,
   }: {
     name: string;
     image: string;
     usePrivateRegistry: boolean;
+    kubeConfig: string;
   }): Promise<any> {
     if (!this.k8sApi) {
-      await this.initializeK8sClient();
+      await this.initializeK8sClient(kubeConfig);
     }
 
     const deployment = {
@@ -112,12 +114,14 @@ export class KubernetesService {
   async createService({
     name,
     port,
+    kubeConfig,
   }: {
     name: string;
     port: number;
+    kubeConfig: string;
   }): Promise<any> {
     if (!this.k8sCoreV1Api) {
-      await this.initializeK8sCoreV1Client();
+      await this.initializeK8sCoreV1Client(kubeConfig);
     }
 
     const service = {
@@ -143,6 +147,7 @@ export class KubernetesService {
       const response = await this.k8sCoreV1Api.createNamespacedService({
         namespace: 'default',
         body: service,
+        kubeConfig: kubeConfig,
       });
       console.log('Yay! \nYou spawned: ' + service.metadata.name);
       console.log(response);
@@ -159,12 +164,14 @@ export class KubernetesService {
   async createIngress({
     name,
     host,
+    kubeConfig,
   }: {
     name: string;
     host: string;
+    kubeConfig: string;
   }): Promise<any> {
     if (!this.k8sNetworkingApi) {
-      await this.initializeK8sNetworkingClient();
+      await this.initializeK8sNetworkingClient(kubeConfig);
     }
 
     try {
@@ -211,16 +218,16 @@ export class KubernetesService {
     }
   }
 
-  async deleteK8sResources({ name }: { name: string }): Promise<any> {
+  async deleteK8sResources({ name, kubeConfig }: { name: string; kubeConfig: string }): Promise<any> {
     console.log('Deleting resources:', name);
     if (!this.k8sApi) {
-      await this.initializeK8sClient();
+      await this.initializeK8sClient(kubeConfig);
     }
     if (!this.k8sCoreV1Api) {
-      await this.initializeK8sCoreV1Client();
+      await this.initializeK8sCoreV1Client(kubeConfig);
     }
     if (!this.k8sNetworkingApi) {
-      await this.initializeK8sNetworkingClient();
+      await this.initializeK8sNetworkingClient(kubeConfig);
     }
 
     try {
@@ -239,9 +246,9 @@ export class KubernetesService {
 
   }
 
-  async getDeployments(): Promise<any> {
+  async getDeployments(kubeConfig: string): Promise<any> {
     if (!this.k8sApi) {
-      await this.initializeK8sClient();
+      await this.initializeK8sClient(kubeConfig);
     }
 
     try {
@@ -253,9 +260,9 @@ export class KubernetesService {
     }
   }
 
-  async getServices(): Promise<any> {
+  async getServices(kubeConfig: string): Promise<any> {
     if (!this.k8sCoreV1Api) {
-      await this.initializeK8sCoreV1Client();
+      await this.initializeK8sCoreV1Client(kubeConfig);
     }
 
     try {
@@ -267,9 +274,9 @@ export class KubernetesService {
     }
   }
 
-  async getIngresses(): Promise<any> {
+  async getIngresses(kubeConfig: string): Promise<any> {
     if (!this.k8sNetworkingApi) {
-      await this.initializeK8sNetworkingClient();
+      await this.initializeK8sNetworkingClient(kubeConfig);
     }
 
     try {
@@ -281,9 +288,9 @@ export class KubernetesService {
     }
   }
 
-  async getPods(): Promise<any> {
+  async getPods(kubeConfig: string): Promise<any> {
     if (!this.k8sCoreV1Api) {
-      await this.initializeK8sCoreV1Client();
+      await this.initializeK8sCoreV1Client(kubeConfig);
     }
 
     try {
