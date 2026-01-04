@@ -134,7 +134,7 @@ export class KubernetesService {
         },
         ports: [
           {
-            protocol: 'http',
+            protocol: 'TCP',
             port: 8080,
             targetPort: Number(port),
           },

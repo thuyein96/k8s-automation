@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { KubernetesService } from './k8s-service.service';
+const crypto = require('crypto');
 
 @Controller('')
 export class KubernetesController {
@@ -21,6 +22,9 @@ export class KubernetesController {
     if (name === undefined || image === undefined || port === undefined || usePrivateRegistry === undefined)
       throw new BadRequestException('Invalid Request, Parameters missing');
 
+    // unhash kubeconfig before use
+    kubeConfig = decodeBase64ToString(kubeConfig);
+    console.log('Decoded KubeConfig:', kubeConfig);
     const deployment = await this.kubernetesService.createDeployment({
       name: name,
       image: image,
@@ -197,3 +201,12 @@ export class KubernetesController {
     }
   }
 }
+
+export function decodeBase64ToString(b64: string): string {
+  // remove spaces/newlines (common when copying)
+  const cleaned = b64.trim().replace(/\s+/g, "");
+
+  return Buffer.from(cleaned, "base64").toString("utf8");
+}
+
+
