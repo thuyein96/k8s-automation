@@ -16,7 +16,7 @@ export class KubernetesController {
   @Post('initialize')
   async initializeK8s(
     @Body()
-    { name, image, port, usePrivateRegistry, kubeConfig }: { name: string; image: string; port: number; usePrivateRegistry: boolean; kubeConfig: string },
+    { name, host, image, port, usePrivateRegistry, kubeConfig }: { name: string; host: string, image: string; port: number; usePrivateRegistry: boolean; kubeConfig: string },
   ): Promise<any> {
     if (name === undefined || image === undefined || port === undefined || usePrivateRegistry === undefined)
       throw new BadRequestException('Invalid Request, Parameters missing');
@@ -39,7 +39,7 @@ export class KubernetesController {
 
     const ingress = await this.kubernetesService.createIngress({
       name: name,
-      host: name,
+      host: host,
       kubeConfig,
     });
     console.log(ingress);
