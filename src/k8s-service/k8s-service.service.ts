@@ -134,8 +134,8 @@ export class KubernetesService {
         },
         ports: [
           {
-            protocol: 'TCP',
-            port: 80,
+            protocol: 'http',
+            port: 8080,
             targetPort: Number(port),
           },
         ],
@@ -184,14 +184,14 @@ export class KubernetesService {
           spec: {
             rules: [
               {
-                host: `${host}.life-au.live`,
+                host: `${host}`,
                 http: {
                   paths: [
                     {
                       backend: {
                         service: {
                           name: `${name}`,
-                          port: { number: 80 },
+                          port: { number: 8080 },
                         },
                       },
                       path: '/',
@@ -201,7 +201,7 @@ export class KubernetesService {
                 },
               },
             ],
-            ingressClassName: 'nginx',
+            ingressClassName: 'traefik',
           },
           // status: {
           //   loadBalancer: {
