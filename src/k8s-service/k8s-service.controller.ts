@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { KubernetesService } from './k8s-service.service';
+import { KubeConfig } from './dtos/kubeconfig';
 const crypto = require('crypto');
 
 @Controller('')
@@ -202,11 +203,9 @@ export class KubernetesController {
   }
 }
 
-export function decodeBase64ToString(b64: string): string {
+export function decodeBase64ToString(obj: KubeConfig) {
   // remove spaces/newlines (common when copying)
-  const cleaned = b64.trim().replace(/\s+/g, "");
-
-  return Buffer.from(cleaned, "base64").toString("utf8");
+  return toYaml(obj, { indent: 2, lineWidth: 0 });
 }
 
 
