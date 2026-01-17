@@ -8,7 +8,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { KubernetesService } from './k8s-service.service';
-import { KubeConfig } from './dtos/kubeconfig';
+import { KubeConfigObject } from './dtos/kubeconfig';
+import { stringify as toYaml } from 'yaml';
 const crypto = require('crypto');
 
 @Controller('')
@@ -18,19 +19,19 @@ export class KubernetesController {
   @Post('initialize')
   async initializeK8s(
     @Body()
-    { name, host, image, port, usePrivateRegistry, kubeConfig }: { name: string; host: string, image: string; port: number; usePrivateRegistry: boolean; kubeConfig: string },
+    { name, host, image, port, usePrivateRegistry, kubeConfig }: { name: string; host: string, image: string; port: number; usePrivateRegistry: boolean; kubeConfig: KubeConfigObject },
   ): Promise<any> {
     if (name === undefined || image === undefined || port === undefined || usePrivateRegistry === undefined)
       throw new BadRequestException('Invalid Request, Parameters missing');
 
-    // unhash kubeconfig before use
-    kubeConfig = decodeBase64ToString(kubeConfig);
-    console.log('Decoded KubeConfig:', kubeConfig);
+    // Convert kubeconfig object to YAML string
+    const kubeConfigString = this.kubernetesService.kubeconfigObjectToYamlPretty(kubeConfig);
+    console.log('Decoded KubeConfig:', kubeConfigString);
     const deployment = await this.kubernetesService.createDeployment({
       name: name,
       image: image,
       usePrivateRegistry,
-      kubeConfig,
+      kubeConfig: kubeConfigString,
     });
     
     if (!deployment.success) throw new BadRequestException(deployment.message);
@@ -38,14 +39,14 @@ export class KubernetesController {
     const service = await this.kubernetesService.createService({
       name: name,
       port: port,
-      kubeConfig,
+      kubeConfig: kubeConfigString,
     });
     if (!service.success) throw new BadRequestException(service.message);
 
     const ingress = await this.kubernetesService.createIngress({
       name: name,
       host: host,
-      kubeConfig,
+      kubeConfig: kubeConfigString,
     });
     console.log(ingress);
     if (!ingress.success) throw new BadRequestException(ingress.message);
@@ -201,11 +202,6 @@ export class KubernetesController {
       };
     }
   }
-}
-
-export function decodeBase64ToString(obj: KubeConfig) {
-  // remove spaces/newlines (common when copying)
-  return toYaml(obj, { indent: 2, lineWidth: 0 });
 }
 
 

@@ -1,4 +1,4 @@
-export interface KubeConfig {
+export interface KubeConfigObject {
   apiVersion: "v1";
   kind: "Config";
   clusters: Array<{

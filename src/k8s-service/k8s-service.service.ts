@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { stringify as toYaml } from 'yaml';
+import { KubeConfigObject } from './dtos/kubeconfig';
 // import * as k8s from '@kubernetes/client-node';
 
 @Injectable()
@@ -147,7 +149,6 @@ export class KubernetesService {
       const response = await this.k8sCoreV1Api.createNamespacedService({
         namespace: 'default',
         body: service,
-        kubeConfig: kubeConfig,
       });
       console.log('Yay! \nYou spawned: ' + service.metadata.name);
       console.log(response);
@@ -300,6 +301,13 @@ export class KubernetesService {
       console.error('Error getting pods:', e);
       return [];
     }
+  }
+
+  kubeconfigObjectToYamlPretty(obj: KubeConfigObject): string {
+    return toYaml(obj, {
+      indent: 2,
+      lineWidth: 0, // don't wrap long base64 strings
+    });
   }
 
 }
