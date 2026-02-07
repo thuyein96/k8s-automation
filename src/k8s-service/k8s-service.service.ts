@@ -53,9 +53,8 @@ export class KubernetesService {
     usePrivateRegistry: boolean;
     kubeConfig: string;
   }): Promise<any> {
-    if (!this.k8sApi) {
-      await this.initializeK8sClient(kubeConfig);
-    }
+    // Always reinitialize to use the correct kubeconfig for each request
+    await this.initializeK8sClient(kubeConfig);
 
     const deployment = {
       metadata: {
@@ -122,9 +121,8 @@ export class KubernetesService {
     port: number;
     kubeConfig: string;
   }): Promise<any> {
-    if (!this.k8sCoreV1Api) {
-      await this.initializeK8sCoreV1Client(kubeConfig);
-    }
+    // Always reinitialize to use the correct kubeconfig for each request
+    await this.initializeK8sCoreV1Client(kubeConfig);
 
     const service = {
       metadata: {
@@ -171,9 +169,8 @@ export class KubernetesService {
     host: string;
     kubeConfig: string;
   }): Promise<any> {
-    if (!this.k8sNetworkingApi) {
-      await this.initializeK8sNetworkingClient(kubeConfig);
-    }
+    // Always reinitialize to use the correct kubeconfig for each request
+    await this.initializeK8sNetworkingClient(kubeConfig);
 
     try {
       await this.k8sNetworkingApi.createNamespacedIngress({
@@ -219,32 +216,40 @@ export class KubernetesService {
     }
   }
 
-  async deleteK8sResources({ name, kubeConfig }: { name: string; kubeConfig: string }): Promise<any> {
+  async deleteK8sResources({
+    name,
+    kubeConfig,
+  }: {
+    name: string;
+    kubeConfig: string;
+  }): Promise<any> {
     console.log('Deleting resources:', name);
-    if (!this.k8sApi) {
-      await this.initializeK8sClient(kubeConfig);
-    }
-    if (!this.k8sCoreV1Api) {
-      await this.initializeK8sCoreV1Client(kubeConfig);
-    }
-    if (!this.k8sNetworkingApi) {
-      await this.initializeK8sNetworkingClient(kubeConfig);
-    }
+    // Always reinitialize to use the correct kubeconfig for each request
+    await this.initializeK8sClient(kubeConfig);
+    await this.initializeK8sCoreV1Client(kubeConfig);
+    await this.initializeK8sNetworkingClient(kubeConfig);
 
     try {
-      const downDeployment = await this.k8sApi.deleteNamespacedDeployment({ name: `${name}`, namespace: 'default' });
+      const downDeployment = await this.k8sApi.deleteNamespacedDeployment({
+        name: `${name}`,
+        namespace: 'default',
+      });
       console.log('Deleted Deployment:', downDeployment);
-      const deleteService = await this.k8sCoreV1Api.deleteNamespacedService({ name: `${name}`, namespace: 'default' });
+      const deleteService = await this.k8sCoreV1Api.deleteNamespacedService({
+        name: `${name}`,
+        namespace: 'default',
+      });
       console.log('Deleted Service:', deleteService);
-      const deleteIngress = await this.k8sNetworkingApi.deleteNamespacedIngress({ name: `${name}`, namespace: 'default' });
+      const deleteIngress = await this.k8sNetworkingApi.deleteNamespacedIngress(
+        { name: `${name}`, namespace: 'default' },
+      );
       console.log('Deleted Ingress:', deleteIngress);
 
-      return 'K8s resources deleted successfully 🎉'
+      return 'K8s resources deleted successfully 🎉';
     } catch (e) {
       console.error('Error deleting resources:', e);
-      throw new BadRequestException(`Failed to delete K8s resources: ${e}`)
+      throw new BadRequestException(`Failed to delete K8s resources: ${e}`);
     }
-
   }
 
   async getDeployments(kubeConfig: string): Promise<any> {
@@ -253,7 +258,9 @@ export class KubernetesService {
     }
 
     try {
-      const response = await this.k8sApi.listNamespacedDeployment({ namespace: 'default' });
+      const response = await this.k8sApi.listNamespacedDeployment({
+        namespace: 'default',
+      });
       return response.items;
     } catch (e) {
       console.error('Error getting deployments:', e);
@@ -267,7 +274,9 @@ export class KubernetesService {
     }
 
     try {
-      const response = await this.k8sCoreV1Api.listNamespacedService({ namespace: 'default' });
+      const response = await this.k8sCoreV1Api.listNamespacedService({
+        namespace: 'default',
+      });
       return response.items;
     } catch (e) {
       console.error('Error getting services:', e);
@@ -281,7 +290,9 @@ export class KubernetesService {
     }
 
     try {
-      const response = await this.k8sNetworkingApi.listNamespacedIngress({ namespace: 'default' });
+      const response = await this.k8sNetworkingApi.listNamespacedIngress({
+        namespace: 'default',
+      });
       return response.items;
     } catch (e) {
       console.error('Error getting ingress:', e);
@@ -295,7 +306,9 @@ export class KubernetesService {
     }
 
     try {
-      const response = await this.k8sCoreV1Api.listNamespacedPod({ namespace: 'default' });
+      const response = await this.k8sCoreV1Api.listNamespacedPod({
+        namespace: 'default',
+      });
       return response.items;
     } catch (e) {
       console.error('Error getting pods:', e);
@@ -309,5 +322,4 @@ export class KubernetesService {
       lineWidth: 0, // don't wrap long base64 strings
     });
   }
-
 }
